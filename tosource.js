@@ -13,25 +13,27 @@ function initIndent(indent)
   return indent === undefined ? '  ' : (indent || '')
 }
 
-function join(elements, currentIndent) {
+function join(elements) {
     var indent = initIndent(walk.indent)
 
-    return indent.slice(1) + elements.join(','+(indent&&'\n')+currentIndent) +
-           (indent ? ' ' : '');
+    var offset = ''
+    walk.seenStack.forEach(function()
+    {
+      offset += indent
+    })
+
+    return indent.slice(1)
+         + elements.join(','+(indent&&'\n')+offset)
+         + (indent&&' ');
 }
 
 var prototype;
 
 prototype = Array.prototype;
 if(prototype.toSource == undefined)
-  prototype.toSource = function(currentIndent, seen)
+  prototype.toSource = function()
   {
-    var items = join(this.map(function(element){
-        return walk(element, currentIndent, seen.slice())
-    }),
-    currentIndent)
-
-    return '[' + items + ']'
+    return '[' + join(this.map(walk)) + ']'
   };
 
 prototype = Date.prototype;
@@ -50,7 +52,7 @@ if(prototype.toSource == undefined)
 
 prototype = Object.prototype;
 if(prototype.toSource == undefined)
-  prototype.toSource = function(currentIndent, seen)
+  prototype.toSource = function()
   {
     var self = this;
 
@@ -60,23 +62,26 @@ if(prototype.toSource == undefined)
     {
       items = join(keys.map(function (key) {
         var s_key = legalKey(key) ? key : JSON.stringify(key)
-        var value = walk(self[key], currentIndent, seen.slice())
+        var value = walk(self[key])
 
         return s_key + ':' + value
-      }),
-      currentIndent)
+      }))
     }
 
     return '{' + items + '}'
   };
 
+if(Math.toSource == undefined)
+  Math.toSource = function()
+  {
+    return 'Math'
+  }
+
 
 /* toSource by Marcello Bastea-Forte - zlib license */
-function walk(object, currentIndent, seen) {
+function walk(object) {
     var filter = walk.filter
     object = filter ? filter(object) : object
-
-    var indent = initIndent(walk.indent)
 
     switch (typeof object) {
         case 'boolean':
@@ -86,25 +91,36 @@ function walk(object, currentIndent, seen) {
         case 'undefined': return 'undefined'
     }
 
-    if (object === Math) return 'Math'
+    if (object === Math) return object.toSource()
     if (object === null) return 'null'
 
     if (object instanceof RegExp) return object.toSource()
     if (object instanceof Date)   return object.toSource()
 
+    var seen = walk.seenStack[walk.seenStack.length-1] || []
+
     var index = seen.indexOf(object);
     if (index >= 0) return '{$circularReference:'+index+'}'
+
+    // Arrays and Objects
+    seen = seen.slice()
     seen.push(object)
 
-    return object.toSource(currentIndent + indent, seen);
+    walk.seenStack.push(seen)
+    var result = object.toSource();
+    walk.seenStack.pop()
+
+    return result
 }
 
 
-module.exports = function(object, filter, indent, startingIndent) {
+module.exports = function(object, filter, indent) {
     walk.filter = filter
     walk.indent = initIndent(indent)
 
-    var result = walk(object, startingIndent || '', [])
+    walk.seenStack = []
+
+    var result = walk(object)
 
     delete walk.filter
     delete walk.indent
