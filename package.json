@@ -1,12 +1,12 @@
 {
-  "name": "tosource",
-  "description": "toSource converts JavaScript objects back to source",
-  "version": "0.1.2",
-  "homepage": "https://github.com/marcello3d/node-tosource",
-  "repository": "git://github.com/marcello3d/node-tosource.git",
-  "author": "Marcello Bastéa-Forte <marcello@cellosoft.com> (http://marcello.cellosoft.com/)",
+  "name": "tosource-polyfill",
+  "description": "Firefox toSource() function polyfill for browser and Node.js",
+  "version": "0.2.0",
+  "homepage": "https://github.com/piranna/tosource-polyfill",
+  "repository": "git://github.com/piranna/tosource-polyfill.git",
+  "author": "Jesús Leganés Combarro 'piranna' <piranna@gmail.com> (http://pirannafs.blogspot.com)",
   "main": "tosource.js",
-  "keywords": ["source", "tosource", "json", "javascript object", "object"],
+  "keywords": ["source", "tosource", "source code", "polyfill", "object"],
   "dependencies": {},
   "scripts": {
       "test":"node test.js"

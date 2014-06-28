@@ -1,18 +1,20 @@
-node-tosource
-=============
-toSource is a super simple function that converts JavaScript objects back to source code.
+tosource-polyfill
+=================
+toSource polyfill that converts JavaScript objects back to source code
+
+It got inspiration on [node-tosource][1]
 
 Introduction
 ------------
-Motivation: JSON doesn't support serializing functions, dates, or regular expressions. I wanted
-a quick and simple way to push trusted data structures with code from Node down to the browser.
-
-This should make it easier to share code and modules between the server and client.
+This module set on objects prototype the Mozilla [toSource()][2] function that
+allow to get a source code representation of an object. It also has a helper
+function that allow to serialize some extra objects like ```null``` or
+```undefined```.
 
 Installation
 ------------
 
-`npm install tosource`
+`npm install tosource-polyfill`
 
 Examples
 --------
@@ -68,7 +70,7 @@ Output:
 ```
 
 
-See [test.js][1] for more examples.
+See [test.js][3] for more examples.
 
 Supported Types
 ---------------
@@ -94,7 +96,9 @@ Notes
 
 License
 -------
-toSource is open source software under the [zlib license][2].
+toSource is open source software under the [zlib license][4].
 
-[1]: https://github.com/marcello3d/node-tosource/blob/master/test.js
-[2]: https://github.com/marcello3d/node-tosource/blob/master/LICENSE
+[1]: https://github.com/marcello3d/node-tosource
+[2]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/toSource
+[3]: https://github.com/piranna/tosource-polyfill/blob/master/test.js
+[4]: https://github.com/piranna/tosource-polyfill/blob/master/LICENSE
