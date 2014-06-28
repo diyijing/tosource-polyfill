@@ -92,7 +92,8 @@ function walk(object, currentIndent, seen) {
     if (object instanceof RegExp) return object.toSource()
     if (object instanceof Date)   return object.toSource()
 
-    if (seen.indexOf(object) >= 0) return '{$circularReference:1}'
+    var index = seen.indexOf(object);
+    if (index >= 0) return '{$circularReference:'+index+'}'
     seen.push(object)
 
     return object.toSource(currentIndent + indent, seen);
