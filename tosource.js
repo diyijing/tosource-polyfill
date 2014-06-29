@@ -8,33 +8,7 @@
 
 
 // Objects with a specific output for toSource
-function initIndent(indent)
-{
-  return indent === undefined ? '  ' : (indent || '')
-}
-
-function join(elements) {
-    var indent = initIndent(walk.indent)
-
-    var offset = ''
-    walk.seenStack.forEach(function()
-    {
-      offset += indent
-    })
-
-    return indent.slice(1)
-         + elements.join(','+(indent&&'\n')+offset)
-         + (indent&&' ');
-}
-
 var prototype;
-
-prototype = Array.prototype;
-if(prototype.toSource == undefined)
-  prototype.toSource = function()
-  {
-    return '[' + join(this.map(walk)) + ']'
-  };
 
 prototype = Date.prototype;
 if(prototype.toSource == undefined)
@@ -50,27 +24,6 @@ if(prototype.toSource == undefined)
     return JSON.stringify(this)
   };
 
-prototype = Object.prototype;
-if(prototype.toSource == undefined)
-  prototype.toSource = function()
-  {
-    var self = this;
-
-    var keys = Object.keys(this)
-    var items = ''
-    if(keys.length)
-    {
-      items = join(keys.map(function (key) {
-        var s_key = legalKey(key) ? key : JSON.stringify(key)
-        var value = walk(self[key])
-
-        return s_key + ':' + value
-      }))
-    }
-
-    return '{' + items + '}'
-  };
-
 if(Math.toSource == undefined)
   Math.toSource = function()
   {
@@ -78,10 +31,57 @@ if(Math.toSource == undefined)
   }
 
 
+// Recursive objects
+const DEFAULT_INDENT = '  '
+
+var _filter
+var _indent = DEFAULT_INDENT
+var seen = []
+
+
+function join(elements) {
+  var offset = Array(seen.length+1).join(_indent)
+
+  return _indent.slice(1)
+       + elements.join(','+(_indent&&'\n')+offset)
+       + (_indent&&' ');
+}
+
+
+prototype = Array.prototype;
+if(prototype.toSource == undefined)
+  prototype.toSource = function()
+  {
+    var items = ''
+    if(this.length)
+      items = join(this.map(walk))
+
+    return '[' + items + ']'
+  };
+
+prototype = Object.prototype;
+if(prototype.toSource == undefined)
+  prototype.toSource = function()
+  {
+    var keys = Object.keys(this)
+
+    var items = ''
+    if(keys.length)
+      items = join(keys.map(function (key) {
+        var s_key = legalKey(key) ? key : JSON.stringify(key)
+        var value = walk(this[key])
+
+        return s_key + ':' + value
+      },
+      this))
+
+    return '{' + items + '}'
+  };
+
+
 /* toSource by Marcello Bastea-Forte - zlib license */
 function walk(object) {
-    var filter = walk.filter
-    object = filter ? filter(object) : object
+    object = _filter ? _filter(object) : object
 
     switch (typeof object) {
         case 'boolean':
@@ -97,33 +97,40 @@ function walk(object) {
     if (object instanceof RegExp) return object.toSource()
     if (object instanceof Date)   return object.toSource()
 
-    var seen = walk.seenStack[walk.seenStack.length-1] || []
-
     var index = seen.indexOf(object);
     if (index >= 0) return '{$circularReference:'+index+'}'
 
     // Arrays and Objects
-    seen = seen.slice()
     seen.push(object)
-
-    walk.seenStack.push(seen)
     var result = object.toSource();
-    walk.seenStack.pop()
+    seen.pop()
 
     return result
 }
 
 
-module.exports = function(object, filter, indent) {
-    walk.filter = filter
-    walk.indent = initIndent(indent)
+function getIndent(indent)
+{
+  switch (typeof indent) {
+    case 'boolean':   return indent ? DEFAULT_INDENT : ''
+    case 'number':    return Array(indent+1).join(' ')
+    case 'string':    return indent
+    case 'undefined': return DEFAULT_INDENT
+  }
 
-    walk.seenStack = []
+  if(indent === null) return ''
+
+  throw SyntaxError('Invalid indent: '+indent)
+}
+
+module.exports = function(object, filter, indent) {
+    _filter = filter
+    _indent = getIndent(indent)
 
     var result = walk(object)
 
-    delete walk.filter
-    delete walk.indent
+    _filter = undefined
+    _indent = DEFAULT_INDENT
 
     return result
 }
