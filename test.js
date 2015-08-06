@@ -1,5 +1,6 @@
-var toSource = require('./tosource')
 var assert = require('assert')
+
+var toSource = require('./index')
 
 
 // Various types

@@ -5,13 +5,8 @@
   "homepage": "https://github.com/piranna/tosource-polyfill",
   "repository": "git://github.com/piranna/tosource-polyfill.git",
   "author": "Jesús Leganés Combarro 'piranna' <piranna@gmail.com> (http://pirannafs.blogspot.com)",
-  "main": "tosource.js",
   "keywords": ["source", "tosource", "source code", "polyfill", "object"],
-  "dependencies": {},
   "scripts": {
-      "test":"node test.js"
-  },
-  "engines": {
-    "node": ">=0.4.0"
+    "test":"node test.js"
   }
 }

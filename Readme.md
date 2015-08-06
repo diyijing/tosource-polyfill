@@ -21,7 +21,7 @@ Examples
 The following code:
 
 ```js
-var toSource = require('tosource')
+var toSource = require('tosource-polyfill')
 console.log(toSource(
     [ 4, 5, 6, "hello", {
         a:2,
@@ -90,7 +90,8 @@ Supported Types
 
 Notes
 -----
-* Functions are serialized with `func.toString()`, no closure properties are serialized
+* Functions are serialized with `func.toString()`, no closure properties are
+  serialized
 * Multiple references to the same object become copies
 * Circular references are encoded as `{$circularReference:1}`
 
