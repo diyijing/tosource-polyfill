@@ -1,41 +1,40 @@
+function applyToSource(prototype, func)
+{
+  if(prototype.toSource === undefined)
+    Object.defineProperty(prototype, 'toSource', {value: func})
+}
+
+
 // Objects where toSource is equal to toString
 [Boolean, Function, Number, RegExp].forEach(function(constructor)
 {
-  var prototype = constructor.prototype;
-  if(prototype.toSource == undefined)
-     prototype.toSource = prototype.toString;
+  var prototype = constructor.prototype
+
+  applyToSource(prototype, prototype.toString)
 });
 
 
-// Objects with a specific output for toSource
-var prototype;
+applyToSource(Date.prototype, function()
+{
+  return 'new Date('+this.getTime()+')'
+})
 
-prototype = Date.prototype;
-if(prototype.toSource == undefined)
-  prototype.toSource = function()
-  {
-    return 'new Date('+this.getTime()+')'
-  };
+applyToSource(String.prototype, function()
+{
+  return JSON.stringify(this)
+})
 
-prototype = String.prototype;
-if(prototype.toSource == undefined)
-  prototype.toSource = function()
-  {
-    return JSON.stringify(this)
-  };
-
-if(Math.toSource == undefined)
-  Math.toSource = function()
-  {
-    return 'Math'
-  }
+applyToSource(Math, function()
+{
+  return 'Math'
+})
 
 
 // Recursive objects
 const DEFAULT_INDENT = '  '
 
 var _filter
-var _indent = DEFAULT_INDENT
+var _indent
 var seen = []
 
 
@@ -47,71 +46,61 @@ function join(elements) {
        + (_indent&&' ');
 }
 
+function fill(keys, func, thisArg)
+{
+  thisArg = thisArg || keys
 
-prototype = Array.prototype;
-if(prototype.toSource == undefined)
-  prototype.toSource = function()
-  {
-    var items = ''
-    if(this.length)
-      items = join(this.map(walk))
+  seen.push(thisArg)
 
-    return '[' + items + ']'
-  };
+  var items = ''
+  if(keys.length)
+    items = join(keys.map(func, thisArg))
 
-prototype = Object.prototype;
-if(prototype.toSource == undefined)
-  prototype.toSource = function()
-  {
-    var keys = Object.keys(this)
+  seen.pop()
 
-    var items = ''
-    if(keys.length)
-      items = join(keys.map(function (key) {
-        var s_key = legalKey(key) ? key : JSON.stringify(key)
-        var value = walk(this[key])
+  return items
+}
 
-        return s_key + ':' + value
-      },
-      this))
 
-    return '{' + items + '}'
-  };
+applyToSource(Array.prototype, function()
+{
+  return '[' + fill(this, walk) + ']'
+})
+
+applyToSource(Object.prototype, function()
+{
+  var keys = Object.keys(this)
+
+  function keyValue(key) {
+    var s_key = legalKey(key) ? key : JSON.stringify(key)
+    var value = walk(this[key])
+
+    return s_key + ':' + value
+  }
+
+  return '{' + fill(keys, keyValue, this) + '}'
+})
 
 
 /* toSource by Marcello Bastea-Forte - zlib license */
-function walk(object) {
-    object = _filter ? _filter(object) : object
+function walk(object)
+{
+  object = _filter ? _filter(object) : object
 
-    switch (typeof object) {
-        case 'boolean':
-        case 'function':
-        case 'number':
-        case 'string':    return object.toSource()
-        case 'undefined': return 'undefined'
-    }
+  if (object === null) return 'null'
+  if (typeof object === 'undefined') return 'undefined'
 
-    if (object === Math) return object.toSource()
-    if (object === null) return 'null'
+  var index = seen.indexOf(object);
+  if (index >= 0) return '{$circularReference:'+index+'}'
 
-    if (object instanceof RegExp) return object.toSource()
-    if (object instanceof Date)   return object.toSource()
-
-    var index = seen.indexOf(object);
-    if (index >= 0) return '{$circularReference:'+index+'}'
-
-    // Arrays and Objects
-    seen.push(object)
-    var result = object.toSource();
-    seen.pop()
-
-    return result
+  return object.toSource();
 }
 
 
 function getIndent(indent)
 {
-  switch (typeof indent) {
+  switch(typeof indent)
+  {
     case 'boolean':   return indent ? DEFAULT_INDENT : ''
     case 'number':    return Array(indent+1).join(' ')
     case 'string':    return indent
@@ -123,20 +112,17 @@ function getIndent(indent)
   throw SyntaxError('Invalid indent: '+indent)
 }
 
-module.exports = function(object, filter, indent) {
-    _filter = filter
-    _indent = getIndent(indent)
+module.exports = function(object, filter, indent)
+{
+  _filter = filter
+  _indent = getIndent(indent)
 
-    var result = walk(object)
-
-    _filter = undefined
-    _indent = DEFAULT_INDENT
-
-    return result
+  return walk(object)
 }
 
 var KEYWORD_REGEXP = /^(abstract|boolean|break|byte|case|catch|char|class|const|continue|debugger|default|delete|do|double|else|enum|export|extends|false|final|finally|float|for|function|goto|if|implements|import|in|instanceof|int|interface|long|native|new|null|package|private|protected|public|return|short|static|super|switch|synchronized|this|throw|throws|transient|true|try|typeof|undefined|var|void|volatile|while|with)$/
 
-function legalKey(string) {
-    return /^[a-z_$][0-9a-z_$]*$/gi.test(string) && !KEYWORD_REGEXP.test(string)
+function legalKey(string)
+{
+  return /^[a-z_$][0-9a-z_$]*$/gi.test(string) && !KEYWORD_REGEXP.test(string)
 }
