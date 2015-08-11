@@ -1,7 +1,7 @@
 {
   "name": "tosource-polyfill",
   "description": "Firefox toSource() function polyfill for browser and Node.js",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "homepage": "https://github.com/piranna/tosource-polyfill",
   "repository": "git://github.com/piranna/tosource-polyfill.git",
   "author": "Jesús Leganés Combarro 'piranna' <piranna@gmail.com> (http://pirannafs.blogspot.com)",

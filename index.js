@@ -26,13 +26,16 @@ function fill(keys, func, thisArg)
 {
   thisArg = thisArg || keys
 
-  seen.push(thisArg)
-
   var items = ''
+
   if(keys.length)
+  {
+    seen.push(thisArg)
+
     items = join(keys.map(func, thisArg))
 
-  seen.pop()
+    seen.pop()
+  }
 
   return items
 }
@@ -54,11 +57,15 @@ function getIndent(indent)
 
 function join(elements)
 {
-  var offset = Array(seen.length+1).join(_indent)
+  if(elements.length < 2) return elements
 
-  return _indent.slice(1)
-       + elements.join(','+(_indent&&'\n')+offset)
-       + (_indent&&' ');
+  var offset = Array(seen.length).join(_indent)
+
+  var newLine = (_indent&&'\n')+offset+_indent
+
+  return newLine
+       + elements.join(','+newLine)
+       + (_indent&&'\n')+offset;
 }
 
 function legalKey(string)
@@ -123,7 +130,7 @@ applyToSource(Object.prototype, function()
     var s_key = legalKey(key) ? key : JSON.stringify(key)
     var value = walk(this[key])
 
-    return s_key + ':' + value
+    return s_key + ': ' + value
   }
 
   return '{' + fill(keys, keyValue, this) + '}'
